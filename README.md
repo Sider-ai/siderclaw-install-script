@@ -1,7 +1,8 @@
 # siderclaw-install-script
 
 在 openclaw 中输入：
-根据 https://github.com/Sider-ai/sider-openclaw-install-script 的说明安装或者更新 remote browser MCP 服务。
+
+`根据 https://github.com/Sider-ai/siderclaw-install-script 的说明安装或者更新 remote browser MCP 服务。`
 
 本仓库主要用于给 OpenClaw 执行 remote browser MCP 的安装与更新操作，重点场景是更新，而不是首次开发。
 
