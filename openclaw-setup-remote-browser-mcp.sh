@@ -210,13 +210,24 @@ echo "[2/4] 配置 config/mcporter.json..."
 mkdir -p "$CONFIG_DIR"
 
 REMOTE_BROWSER_ENTRY='"remote-browser": { "baseUrl": "http://localhost:3000/mcp" }'
+REMOTE_BROWSER_BASEURL='http://localhost:3000/mcp'
 
 if [ -f "$MCPORTER_FILE" ]; then
-    if grep -q '"remote-browser"' "$MCPORTER_FILE"; then
-        skip "mcporter.json 中 remote-browser 配置"
+    CURRENT_URL=$(python3 -c "
+import json
+try:
+    with open('$MCPORTER_FILE', 'r') as f:
+        data = json.load(f)
+    url = data.get('mcpServers', {}).get('remote-browser', {}).get('baseUrl', '')
+    print(url)
+except Exception:
+    print('')
+" 2>/dev/null || true)
+    if [ "$CURRENT_URL" = "$REMOTE_BROWSER_BASEURL" ]; then
+        skip "mcporter.json 中 remote-browser 配置（已是正确 baseUrl）"
     else
         python3 -c "
-import json, sys
+import json
 with open('$MCPORTER_FILE', 'r') as f:
     data = json.load(f)
 if 'mcpServers' not in data:
@@ -228,7 +239,11 @@ with open('$MCPORTER_FILE', 'w') as f:
     json.dump(data, f, indent=2)
     f.write('\n')
 "
-        ok "mcporter.json 已更新，添加 remote-browser"
+        if [ -n "$CURRENT_URL" ]; then
+            ok "mcporter.json 已升级 remote-browser baseUrl → $REMOTE_BROWSER_BASEURL"
+        else
+            ok "mcporter.json 已更新，添加 remote-browser"
+        fi
     fi
 else
     cat > "$MCPORTER_FILE" << 'JSON_EOF'
@@ -255,6 +270,9 @@ MCP_BLOCK='## MCP Servers
 - **remote-browser** — Remote browser control via MCP at http://localhost:3000/mcp
   - Use `mcporter call remote-browser.<tool>` to invoke tools'
 
+# 期望的 remote-browser 行（用于检测是否已是最新）
+TOOLS_CANONICAL_LINE='- **remote-browser** — Remote browser control via MCP at http://localhost:3000/mcp'
+
 if [ ! -f "$TOOLS_FILE" ]; then
     cat > "$TOOLS_FILE" << 'TOOLS_EOF'
 # TOOLS.md - Local Notes
@@ -267,27 +285,37 @@ Skills define _how_ tools work. This file is for _your_ specifics — the stuff 
   - Use `mcporter call remote-browser.<tool>` to invoke tools
 TOOLS_EOF
     ok "TOOLS.md 已创建（含 MCP Servers 段落）"
-elif grep -q 'remote-browser.*Remote browser control via MCP' "$TOOLS_FILE"; then
-    skip "TOOLS.md 中 remote-browser 描述"
-elif grep -q '## MCP Servers' "$TOOLS_FILE"; then
+elif grep -qF "$TOOLS_CANONICAL_LINE" "$TOOLS_FILE"; then
+    skip "TOOLS.md 中 remote-browser 描述（已是最新）"
+else
+    # 已有文件但描述缺失或不同：替换或追加 remote-browser 条目，保证唯一且最新
     python3 -c "
-import sys
-with open('$TOOLS_FILE', 'r') as f:
+import re
+tools_file = '$TOOLS_FILE'
+canonical = '''- **remote-browser** — Remote browser control via MCP at http://localhost:3000/mcp
+  - Use \`mcporter call remote-browser.<tool>\` to invoke tools'''
+with open(tools_file, 'r') as f:
     content = f.read()
-insert = '''
-- **remote-browser** — Remote browser control via MCP at http://localhost:3000/mcp
-  - Use \`mcporter call remote-browser.<tool>\` to invoke tools
-'''
-idx = content.find('## MCP Servers')
-line_end = content.find('\n', idx)
-content = content[:line_end+1] + insert + content[line_end+1:]
-with open('$TOOLS_FILE', 'w') as f:
+
+# 若已有任意 remote-browser 条目（可能旧版），先删掉整段（含所有缩进子行）
+content = re.sub(
+    r'\n- \*\*remote-browser\*\*.*?(?=\n(?:- \*\*|\#\#)|$)',
+    '',
+    content,
+    count=1,
+    flags=re.DOTALL
+)
+# 确保有 ## MCP Servers 段落
+if '## MCP Servers' not in content:
+    content = content.rstrip() + '\n\n## MCP Servers\n\n' + canonical + '\n'
+else:
+    idx = content.find('## MCP Servers')
+    line_end = content.find('\n', idx)
+    content = content[:line_end+1] + canonical + '\n' + content[line_end+1:]
+with open(tools_file, 'w') as f:
     f.write(content)
 "
-    ok "TOOLS.md 的 MCP Servers 段落已追加 remote-browser"
-else
-    printf '\n%s\n' "$MCP_BLOCK" >> "$TOOLS_FILE"
-    ok "TOOLS.md 已追加 MCP Servers 段落"
+    ok "TOOLS.md 已更新/升级 remote-browser 描述"
 fi
 
 # ──────────────────────────────────────────────
@@ -314,8 +342,25 @@ $SIDER_RULE
 Don't ask permission. Just do it.
 AGENTS_EOF
     ok "AGENTS.md 已创建（含 sider 规则）"
-elif grep -qF 'channel=sider' "$AGENTS_FILE"; then
-    skip "AGENTS.md 中 sider 规则"
+elif grep -qF "$SIDER_RULE" "$AGENTS_FILE"; then
+    skip "AGENTS.md 中 sider 规则（已是最新）"
+elif grep -q 'channel=sider' "$AGENTS_FILE"; then
+    # 存在旧版/不同表述的 sider 规则，替换为当前版本
+    python3 -c "
+agents_file = '$AGENTS_FILE'
+sider_rule = '- 在 channel=sider 且用户请求浏览器操作时，必须基于 remote-browser skill 优先走 mcporter remote-browser；若不可用，直接报错并提示修复，不得回退到内置 browser 工具。\n'
+with open(agents_file, 'r') as f:
+    lines = f.readlines()
+new_lines = []
+for line in lines:
+    if 'channel=sider' in line and line.strip().startswith('-'):
+        new_lines.append(sider_rule)
+    else:
+        new_lines.append(line)
+with open(agents_file, 'w') as f:
+    f.writelines(new_lines)
+"
+    ok "AGENTS.md 已升级 sider 规则为最新表述"
 elif grep -q '## Every Session' "$AGENTS_FILE"; then
     python3 -c "
 import sys
