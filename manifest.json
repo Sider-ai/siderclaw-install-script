@@ -1,0 +1,22 @@
+{
+  "components": {
+    "openclaw-console": {
+      "version": "0.2.0",
+      "display_name": "OpenClaw Console",
+      "binary": "openclaw-console-linux-amd64",
+      "service": "openclaw-console"
+    },
+    "browser-mcp": {
+      "version": "0.0.2",
+      "display_name": "Browser MCP",
+      "binary": "extension-mcp-linux-amd64",
+      "service": "browser-mcp",
+      "hooks": [
+        {
+          "file": "openclaw-setup-remote-browser-mcp.sh",
+          "args": ["{{.OpenclawHome}}/.openclaw"]
+        }
+      ]
+    }
+  }
+}
