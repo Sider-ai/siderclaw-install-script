@@ -108,3 +108,10 @@ sudo systemctl status <服务名> --no-pager
 ## 适用范围
 
 本文档面向使用 `systemd` 管理服务的 Linux 目标机器。如目标环境不使用 `systemd`，应先确认实际的进程管理方式后再继续。
+
+## Sider 插件文档与安装脚本
+
+仓库中的 [`sider-openclaw-plugin/`](./sider-openclaw-plugin) 目录收纳了 Sider 插件相关的安装资料：
+
+- `sider-openclaw-plugin/README.md`：Sider OpenClaw Plugin 对接文档
+- `sider-openclaw-plugin/install-openclaw-plugin.sh`：供 `curl | bash` 使用的安装脚本
