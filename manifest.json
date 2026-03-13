@@ -14,7 +14,7 @@
       "hooks": [
         {
           "file": "openclaw-setup-remote-browser-mcp.sh",
-          "args": ["{{.OpenclawHome}}/.openclaw"]
+          "args": ["{{.OpenclawHome}}/.openclaw/workspace"]
         }
       ]
     }
