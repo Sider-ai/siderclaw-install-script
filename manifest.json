@@ -26,5 +26,11 @@
       "binary": "siderclaw-gateway-linux-amd64",
       "service": "siderclaw-gateway"
     }
+  },
+  "plugins": {
+    "sider": {
+      "display_name": "Sider Plugin",
+      "npm_spec": "@hywkp/sider"
+    }
   }
 }
