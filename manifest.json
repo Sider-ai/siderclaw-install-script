@@ -14,9 +14,14 @@
       "hooks": [
         {
           "file": "openclaw-setup-remote-browser-mcp.sh",
-          "args": ["{{.OpenclawHome}}/.openclaw/workspace"]
+          "args": [
+            "{{.OpenclawHome}}/.openclaw/workspace"
+          ]
         }
       ]
+    },
+    "siderclaw-gateway": {
+      "version": "0.4.0"
     }
   }
 }
