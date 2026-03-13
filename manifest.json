@@ -23,8 +23,5 @@
     "siderclaw-gateway": {
       "version": "0.4.0"
     }
-  },
-  "browser-mcp": {
-    "version": "0.0.6"
   }
 }
