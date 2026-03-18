@@ -1,7 +1,7 @@
 {
   "components": {
     "openclaw-console": {
-      "version": "0.5.3",
+      "version": "0.5.4",
       "display_name": "OpenClaw Console",
       "binary": "openclaw-console-linux-amd64",
       "service": "openclaw-console"
