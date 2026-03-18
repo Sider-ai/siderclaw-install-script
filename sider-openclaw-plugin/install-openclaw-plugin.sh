@@ -70,10 +70,6 @@ configure_sider_channel() {
   echo "[install] Applying channels.sider config..."
   openclaw config set channels.sider.enabled true
   openclaw config set channels.sider.gatewayUrl "$SIDER_GATEWAY_URL"
-  openclaw config set channels.sider.sessionId "$SIDER_SESSION_ID"
-  # Keep old key for compatibility with older plugin versions.
-  openclaw config set channels.sider.sessionKey "$SIDER_SESSION_ID"
-  openclaw config set channels.sider.defaultTo "session:$SIDER_SESSION_ID"
 
   if [[ -n "$SIDER_RELAY_ID" ]]; then
     openclaw config set channels.sider.relayId "$SIDER_RELAY_ID"
@@ -81,17 +77,23 @@ configure_sider_channel() {
   if [[ -n "$SIDER_RELAY_TOKEN" ]]; then
     openclaw config set channels.sider.relayToken "$SIDER_RELAY_TOKEN"
   fi
+
+  if [[ -n "$SIDER_SESSION_ID" ]]; then
+    openclaw config set channels.sider.sessionId "$SIDER_SESSION_ID"
+    # Keep old key for compatibility with older plugin versions.
+    openclaw config set channels.sider.sessionKey "$SIDER_SESSION_ID"
+    openclaw config set channels.sider.defaultTo "session:$SIDER_SESSION_ID"
+  else
+    echo "[install] SIDER_SESSION_ID is empty; skip sessionId/sessionKey/defaultTo."
+    echo "[install] Relay monitor will receive all sessions by default."
+    echo "[install] To set a default outbound session later:"
+    echo "  openclaw config set channels.sider.defaultTo 'session:<your-session-id>'"
+    echo "[install] If old config still contains channels.sider.sessionId/sessionKey, remove them manually to stop legacy single-session filtering."
+  fi
 }
 
 if [[ "$RUN_CONFIGURE" = "0" ]]; then
   echo "[install] RUN_CONFIGURE=0, skipped channel configuration."
-elif [[ -z "$SIDER_SESSION_ID" ]]; then
-  echo "[install] SIDER_SESSION_ID is empty, skipped channel configuration."
-  echo "[install] Configure manually with:"
-  echo "  openclaw config set channels.sider.enabled true"
-  echo "  openclaw config set channels.sider.gatewayUrl '$SIDER_GATEWAY_URL'"
-  echo "  openclaw config set channels.sider.sessionId '<your-session-id>'"
-  echo "  openclaw config set channels.sider.defaultTo 'session:<your-session-id>'"
 else
   configure_sider_channel
 fi

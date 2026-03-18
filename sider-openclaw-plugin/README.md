@@ -25,18 +25,26 @@ curl -fsSL https://raw.githubusercontent.com/Sider-ai/siderclaw-install-script/m
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Sider-ai/siderclaw-install-script/main/sider-openclaw-plugin/install-openclaw-plugin.sh | \
   SIDER_GATEWAY_URL='http://127.0.0.1:8080' \
+  bash
+```
+
+如需同时写入默认发送目标（以及兼容旧版的单 session 过滤配置）：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Sider-ai/siderclaw-install-script/main/sider-openclaw-plugin/install-openclaw-plugin.sh | \
+  SIDER_GATEWAY_URL='http://127.0.0.1:8080' \
   SIDER_SESSION_ID='s1' \
   bash
 ```
 
 安装参数说明：
-- `SIDER_SESSION_ID`：必填，用于路由消息
+- `SIDER_SESSION_ID`：可选；若提供，会写入 `sessionId/sessionKey/defaultTo`，用于默认发送目标和兼容旧版单 session 过滤
 - `SIDER_GATEWAY_URL`：可选，默认 `http://127.0.0.1:8080`
 - `SIDER_RELAY_ID`：可选，不传则使用插件默认值
 - `SIDER_RELAY_TOKEN`：可选，仅在 gateway 开启 relay token 校验时需要
 - `SIDER_SESSION_KEY`：旧变量名，脚本会自动映射到 `SIDER_SESSION_ID`
 
-如需针对指定的 gateway、session、relay 生成安装命令，直接替换上面的环境变量即可。
+不传 `SIDER_SESSION_ID` 时，relay monitor 默认接收所有 session 的消息。
 
 ---
 
@@ -50,12 +58,27 @@ curl -fsSL https://raw.githubusercontent.com/Sider-ai/siderclaw-install-script/m
     "sider": {
       "enabled": true,
       "gatewayUrl": "http://127.0.0.1:8080",
-      "sessionId": "siderclaw-default",
-      "defaultTo": "session:siderclaw-default",
+      "relayId": "openclaw-default"
     }
   }
 }
 ```
+
+如需给主动发送场景提供默认目标，可额外设置：
+
+```json
+{
+  "channels": {
+    "sider": {
+      "defaultTo": "session:siderclaw-default"
+    }
+  }
+}
+```
+
+兼容旧版单 session 监听时，也可保留：
+- `sessionId`
+- `sessionKey`
 
 检查状态：
 
@@ -76,7 +99,7 @@ WebSocket 连接：
 握手首帧：
 
 ```json
-{"type":"register","session_id":"<session_id>","relay_id":"<relay_id>","token":"<optional>"}
+{"type":"register","relay_id":"<relay_id>","token":"<optional>"}
 ```
 
 发送持久化消息：
@@ -108,6 +131,10 @@ ACK：
 ```json
 {"type":"ack","session_id":"<session_id>","id":"<id>"}
 ```
+
+说明：
+- 握手不再绑定 `session_id`
+- 消息帧中的 `session_id` 仍然用于路由和持久化
 
 ---
 
@@ -161,12 +188,17 @@ ACK：
     "stream_id":"<uuid>",
     "seq":1,
     "delta":"你好，",
+    "text":"你好，",
     "done":false,
     "chunk_chars":3,
     "ts":1730000000001
   }
 }
 ```
+
+说明：
+- `delta` 为本帧新增文本
+- `text` 为应用本帧后的完整可见文本快照，便于客户端直接覆盖当前流式内容
 
 ### 4.4 stream.done
 
@@ -261,7 +293,7 @@ ACK：
 
 ## 5. 客户端渲染建议
 
-- 使用 `stream_id + seq` 作为流式拼接键，按 `seq` 递增拼接 `delta`
+- 使用 `stream_id + seq` 作为流式排序键；可继续按 `delta` 递增拼接，也可直接用 `text` 覆盖当前流式内容
 - `stream.*` 仅用于实时渲染，不作为历史消息源
 - `tool.call/tool.result` 仅用于实时状态，不作为历史消息源
 - 最终以 `type=message` 的持久化消息为准（用于会话历史）
