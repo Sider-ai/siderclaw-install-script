@@ -7,7 +7,7 @@
       "service": "openclaw-console"
     },
     "browser-mcp": {
-      "version": "0.0.8",
+      "version": "0.0.9",
       "display_name": "Browser MCP",
       "binary": "extension-mcp-linux-amd64",
       "service": "browser-mcp",
