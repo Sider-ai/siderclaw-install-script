@@ -39,8 +39,8 @@ if [ -f "$SKILL_DIR/SKILL.md" ]; then
     fi
 fi
 
-if [ ! -f “$SKILL_DIR/SKILL.md” ]; then
-    cat > “$SKILL_DIR/SKILL.md” << 'SKILL_EOF'
+if [ ! -f "$SKILL_DIR/SKILL.md" ]; then
+    cat > "$SKILL_DIR/SKILL.md" << 'SKILL_EOF'
 ---
 name: remote-browser
 description: 操控用户本地浏览器执行自动化任务。当用户要求在其浏览器中完成任何操作时必须使用此 skill，包括：打开/跳转网页、点击按钮/链接、表单填写与提交、截图、抓取页面内容或结构、多标签页操作，以及注入脚本修改网页 UI。此 skill 通过 MCPorter + remote-browser MCP 服务，使用 userScripts API 在页面上下文中执行 JavaScript 代码，直接操作用户真实浏览器。
@@ -86,13 +86,13 @@ Array.from(document.querySelectorAll('a')).map(a => ({
 }))
 
 // 填写表单
-const input = document.querySelector('input[name=”email”]');
+const input = document.querySelector('input[name="email"]');
 input.value = 'user@example.com';
 input.dispatchEvent(new Event('input', { bubbles: true }));
 input.dispatchEvent(new Event('change', { bubbles: true }));
 
 // 点击按钮
-document.querySelector('button[type=”submit”]').click();
+document.querySelector('button[type="submit"]').click();
 ```
 
 ### 原生输入事件函数
@@ -116,7 +116,7 @@ document.querySelector('button[type=”submit”]').click();
 ```javascript
 // 简单点击和输入
 await nativeClick('button.start');
-await nativeType('input[name=”username”]', 'john@example.com');
+await nativeType('input[name="username"]', 'john@example.com');
 await nativePress('Enter');
 
 // 组合键（Ctrl+A 全选）
@@ -131,8 +131,8 @@ await nativeKeyUp('Control');
 **关键：使用结构化选择器，不要使用文本内容匹配**（文本会随语言变化而失效）。
 
 ✅ 正确：
-  `document.querySelector('button[aria-label=”Submit”]')`
-  `document.querySelector('[data-testid=”send-button”]')`
+  `document.querySelector('button[aria-label="Submit"]')`
+  `document.querySelector('[data-testid="send-button"]')`
   `document.querySelector('.compose-footer button.primary')`
 
 ❌ 错误：
@@ -148,20 +148,20 @@ await nativeKeyUp('Control');
 
 ```
 # 导航到 URL
-{ “url”: “https://example.com” }
+{ "url": "https://example.com" }
 
 # 在新标签页打开
-{ “url”: “https://example.com”, “newTab”: true }
+{ "url": "https://example.com", "newTab": true }
 
 # 历史导航
-{ “back”: true }
-{ “forward”: true }
+{ "back": true }
+{ "forward": true }
 
 # 列出所有标签页
-{ “listTabs”: true }
+{ "listTabs": true }
 
 # 切换到指定标签页
-{ “switchToTab”: 123456 }
+{ "switchToTab": 123456 }
 ```
 
 **关键：所有导航必须通过 navigate 工具。REPL 代码中禁止使用 window.location 或 history.back/forward。**
@@ -212,7 +212,7 @@ mcporter call remote-browser.<tool_name> --args '<JSON>' --output json
 
 ```
 # 错误 1：直接传 JSON（mcporter 会按冒号拆分导致参数错乱）
-mcporter call remote-browser.navigate '{“url”: “https://example.com”}'
+mcporter call remote-browser.navigate '{"url": "https://example.com"}'
 
 # 错误 2：key=value 中 URL 包含冒号会导致解析失败
 mcporter call remote-browser.navigate url=https://example.com
@@ -225,24 +225,24 @@ mcporter call remote-browser.navigate url=https://example.com
 ### 1. repl — 在页面上下文执行 JavaScript
 参数：`code`（必填）、`title`（可选）、`tabId`（可选，默认活跃标签页）
 ```
-mcporter call remote-browser.repl --args '{“code”: “document.title”}' --output json
-mcporter call remote-browser.repl --args '{“code”: “await nativeClick(\”button.submit\”)”, “tabId”: 123}' --output json
+mcporter call remote-browser.repl --args '{"code": "document.title"}' --output json
+mcporter call remote-browser.repl --args '{"code": "await nativeClick(\"button.submit\")", "tabId": 123}' --output json
 ```
 
 ### 2. navigate — 导航与标签页管理
 ```
-mcporter call remote-browser.navigate --args '{“url”: “https://example.com”}' --output json
-mcporter call remote-browser.navigate --args '{“url”: “https://example.com”, “newTab”: true}' --output json
-mcporter call remote-browser.navigate --args '{“listTabs”: true}' --output json
-mcporter call remote-browser.navigate --args '{“switchToTab”: 123456}' --output json
-mcporter call remote-browser.navigate --args '{“back”: true}' --output json
+mcporter call remote-browser.navigate --args '{"url": "https://example.com"}' --output json
+mcporter call remote-browser.navigate --args '{"url": "https://example.com", "newTab": true}' --output json
+mcporter call remote-browser.navigate --args '{"listTabs": true}' --output json
+mcporter call remote-browser.navigate --args '{"switchToTab": 123456}' --output json
+mcporter call remote-browser.navigate --args '{"back": true}' --output json
 ```
 
 ### 3. screenshot — 截图/图片提取
 ```
 mcporter call remote-browser.screenshot --output json
-mcporter call remote-browser.screenshot --args '{“tabId”: 123}' --output json
-mcporter call remote-browser.screenshot --args '{“selector”: “img.hero”, “maxWidth”: 800}' --output json
+mcporter call remote-browser.screenshot --args '{"tabId": 123}' --output json
+mcporter call remote-browser.screenshot --args '{"selector": "img.hero", "maxWidth": 800}' --output json
 ```
 
 ### 4. task_done — 任务完成
