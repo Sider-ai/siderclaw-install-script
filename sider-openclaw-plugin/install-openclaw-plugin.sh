@@ -5,11 +5,13 @@ PLUGIN_NPM_SPEC_DEFAULT="@hywkp/sider"
 PLUGIN_ID_DEFAULT="sider"
 
 RUN_CONFIGURE="${RUN_CONFIGURE:-1}"
-SIDER_GATEWAY_URL="${SIDER_GATEWAY_URL:-http://127.0.0.1:8080}"
-SIDER_SESSION_KEY="${SIDER_SESSION_KEY:-}"
-SIDER_SESSION_ID="${SIDER_SESSION_ID:-$SIDER_SESSION_KEY}"
+SIDER_SETUP_TOKEN="${SIDER_SETUP_TOKEN:-}"
+MANAGER_PUBLIC_URL="${MANAGER_PUBLIC_URL:-}"
+SIDER_GATEWAY_URL="${SIDER_GATEWAY_URL:-}"
 SIDER_RELAY_ID="${SIDER_RELAY_ID:-}"
+SIDER_TOKEN_INPUT="${SIDER_TOKEN:-}"
 SIDER_RELAY_TOKEN="${SIDER_RELAY_TOKEN:-}"
+SIDER_TOKEN="${SIDER_TOKEN_INPUT:-$SIDER_RELAY_TOKEN}"
 
 PLUGIN_NPM_SPEC="${PLUGIN_NPM_SPEC:-$PLUGIN_NPM_SPEC_DEFAULT}"
 PLUGIN_ID="${PLUGIN_ID:-$PLUGIN_ID_DEFAULT}"
@@ -17,6 +19,16 @@ PLUGIN_ID="${PLUGIN_ID:-$PLUGIN_ID_DEFAULT}"
 if ! command -v openclaw >/dev/null 2>&1; then
   echo "[install] openclaw command not found in PATH."
   echo "[install] Install OpenClaw first, then rerun this script."
+  exit 1
+fi
+
+if [[ -n "${SIDER_SESSION_ID:-}" || -n "${SIDER_SESSION_KEY:-}" ]]; then
+  echo "[install] SIDER_SESSION_ID and SIDER_SESSION_KEY are no longer used during installation; ignoring them."
+fi
+
+if [[ -n "$SIDER_TOKEN_INPUT" && -n "$SIDER_RELAY_TOKEN" && "$SIDER_TOKEN_INPUT" != "$SIDER_RELAY_TOKEN" ]]; then
+  echo "[install] SIDER_TOKEN and SIDER_RELAY_TOKEN are both set but differ." >&2
+  echo "[install] Keep only one of them, or make them identical." >&2
   exit 1
 fi
 
@@ -66,36 +78,101 @@ else
   exit "$install_rc"
 fi
 
-configure_sider_channel() {
-  echo "[install] Applying channels.sider config..."
+configure_common_sider_channel() {
+  echo "[install] Applying common channels.sider config..."
   openclaw config set channels.sider.enabled true
-  openclaw config set channels.sider.gatewayUrl "$SIDER_GATEWAY_URL"
 
   if [[ -n "$SIDER_RELAY_ID" ]]; then
     openclaw config set channels.sider.relayId "$SIDER_RELAY_ID"
   fi
-  if [[ -n "$SIDER_RELAY_TOKEN" ]]; then
-    openclaw config set channels.sider.relayToken "$SIDER_RELAY_TOKEN"
+}
+
+configure_sider_setup_token_mode() {
+  echo "[install] Configuring setup-token mode..."
+  configure_common_sider_channel
+  echo "[install] Setup token mode does not persist gatewayUrl/token into openclaw.json."
+  echo "[install] Keep SIDER_SETUP_TOKEN in the OpenClaw runtime environment until the first manager registration completes."
+  echo "[install] If channels.sider.gatewayUrl/token already exist, remove them first; otherwise setup-token exchange will be skipped."
+  if [[ -n "$MANAGER_PUBLIC_URL" ]]; then
+    echo "[install] MANAGER_PUBLIC_URL is set for this shell. Ensure the OpenClaw runtime also has it."
+  else
+    echo "[install] MANAGER_PUBLIC_URL is not set in this shell."
+    echo "[install] This is only okay if the installed plugin package already embeds a manager URL."
+  fi
+}
+
+configure_sider_direct_mode() {
+  echo "[install] Configuring direct gateway mode..."
+  configure_common_sider_channel
+  openclaw config set channels.sider.gatewayUrl "$SIDER_GATEWAY_URL"
+
+  if [[ -n "$SIDER_TOKEN" ]]; then
+    openclaw config set channels.sider.token "$SIDER_TOKEN"
+    if [[ -n "$SIDER_RELAY_TOKEN" && -z "$SIDER_TOKEN_INPUT" ]]; then
+      echo "[install] Received legacy SIDER_RELAY_TOKEN; wrote channels.sider.token."
+    fi
+  else
+    echo "[install] SIDER_TOKEN is empty; only configure gatewayUrl."
+    echo "[install] This works only if the gateway does not require relay auth."
+  fi
+}
+
+resolve_configure_mode() {
+  local has_setup_token=0
+  local has_direct_gateway=0
+  local has_direct_token=0
+
+  if [[ -n "$SIDER_SETUP_TOKEN" ]]; then
+    has_setup_token=1
+  fi
+  if [[ -n "$SIDER_GATEWAY_URL" ]]; then
+    has_direct_gateway=1
+  fi
+  if [[ -n "$SIDER_TOKEN" ]]; then
+    has_direct_token=1
   fi
 
-  if [[ -n "$SIDER_SESSION_ID" ]]; then
-    openclaw config set channels.sider.sessionId "$SIDER_SESSION_ID"
-    # Keep old key for compatibility with older plugin versions.
-    openclaw config set channels.sider.sessionKey "$SIDER_SESSION_ID"
-    openclaw config set channels.sider.defaultTo "session:$SIDER_SESSION_ID"
-  else
-    echo "[install] SIDER_SESSION_ID is empty; skip sessionId/sessionKey/defaultTo."
-    echo "[install] Relay monitor will receive all sessions by default."
-    echo "[install] To set a default outbound session later:"
-    echo "  openclaw config set channels.sider.defaultTo 'session:<your-session-id>'"
-    echo "[install] If old config still contains channels.sider.sessionId/sessionKey, remove them manually to stop legacy single-session filtering."
+  if (( has_setup_token )) && (( has_direct_gateway || has_direct_token )); then
+    echo "[install] Do not mix setup-token mode with direct gateway/token mode." >&2
+    echo "[install] Use either SIDER_SETUP_TOKEN, or SIDER_GATEWAY_URL (+ optional SIDER_TOKEN)." >&2
+    return 1
   fi
+  if (( has_setup_token )); then
+    echo "setup-token"
+    return 0
+  fi
+  if (( has_direct_token )) && (( ! has_direct_gateway )); then
+    echo "[install] SIDER_TOKEN requires SIDER_GATEWAY_URL." >&2
+    return 1
+  fi
+  if (( has_direct_gateway )); then
+    echo "direct"
+    return 0
+  fi
+  echo "none"
 }
 
 if [[ "$RUN_CONFIGURE" = "0" ]]; then
   echo "[install] RUN_CONFIGURE=0, skipped channel configuration."
 else
-  configure_sider_channel
+  configure_mode="$(resolve_configure_mode)"
+  case "$configure_mode" in
+    setup-token)
+      configure_sider_setup_token_mode
+      ;;
+    direct)
+      configure_sider_direct_mode
+      ;;
+    none)
+      echo "[install] No channels.sider configuration was applied."
+      echo "[install] To use setup-token mode:"
+      echo "  export SIDER_SETUP_TOKEN='<one-time-token>'"
+      echo "  export MANAGER_PUBLIC_URL='https://<manager-base-url>'"
+      echo "  curl -fsSL https://raw.githubusercontent.com/Sider-ai/siderclaw-install-script/main/sider-openclaw-plugin/install-openclaw-plugin.sh | bash"
+      echo "[install] To use direct gateway mode:"
+      echo "  curl -fsSL https://raw.githubusercontent.com/Sider-ai/siderclaw-install-script/main/sider-openclaw-plugin/install-openclaw-plugin.sh | SIDER_GATEWAY_URL='https://<gateway-url>' SIDER_TOKEN='<access-token>' bash"
+      ;;
+  esac
 fi
 
 echo "[install] Suggested checks:"

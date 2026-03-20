@@ -20,31 +20,41 @@
 curl -fsSL https://raw.githubusercontent.com/Sider-ai/siderclaw-install-script/main/sider-openclaw-plugin/install-openclaw-plugin.sh | RUN_CONFIGURE=0 bash
 ```
 
-安装并写入 `channels.sider` 配置：
+配置方式 1：只启用 `setup token` 模式：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Sider-ai/siderclaw-install-script/main/sider-openclaw-plugin/install-openclaw-plugin.sh | \
-  SIDER_GATEWAY_URL='http://127.0.0.1:8080' \
-  bash
+export SIDER_SETUP_TOKEN='<one-time-token>'
+export MANAGER_PUBLIC_URL='https://<manager-base-url>'
+curl -fsSL https://raw.githubusercontent.com/Sider-ai/siderclaw-install-script/main/sider-openclaw-plugin/install-openclaw-plugin.sh | bash
 ```
 
-如需同时写入默认发送目标（以及兼容旧版的单 session 过滤配置）：
+说明：
+- 脚本会写入 `channels.sider.enabled=true`
+- `SIDER_SETUP_TOKEN` / `MANAGER_PUBLIC_URL` 仍需保留在 OpenClaw 运行进程的环境变量里
+- 若安装包已内置 manager 地址，`MANAGER_PUBLIC_URL` 可不设置
+- 若当前账号已经配置了 `gatewayUrl/token`，需先移除；否则 setup token 交换不会触发
+
+配置方式 2：直接写入 `gatewayUrl + token`：
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Sider-ai/siderclaw-install-script/main/sider-openclaw-plugin/install-openclaw-plugin.sh | \
-  SIDER_GATEWAY_URL='http://127.0.0.1:8080' \
-  SIDER_SESSION_ID='s1' \
+  SIDER_GATEWAY_URL='https://<gateway-url>' \
+  SIDER_TOKEN='<access-token>' \
   bash
 ```
 
 安装参数说明：
-- `SIDER_SESSION_ID`：可选；若提供，会写入 `sessionId/sessionKey/defaultTo`，用于默认发送目标和兼容旧版单 session 过滤
-- `SIDER_GATEWAY_URL`：可选，默认 `http://127.0.0.1:8080`
-- `SIDER_RELAY_ID`：可选，不传则使用插件默认值
-- `SIDER_RELAY_TOKEN`：可选，仅在 gateway 开启 relay token 校验时需要
-- `SIDER_SESSION_KEY`：旧变量名，脚本会自动映射到 `SIDER_SESSION_ID`
+- `SIDER_SETUP_TOKEN`：启用 setup token 模式；不会写入 `openclaw.json`
+- `MANAGER_PUBLIC_URL`：setup token 模式下的 manager 基地址；若安装包已内置该值，可不设置
+- `SIDER_GATEWAY_URL`：直接配置模式下写入 `channels.sider.gatewayUrl`
+- `SIDER_TOKEN`：直接配置模式下写入 `channels.sider.token`
+- `RUN_CONFIGURE=0`：仅安装插件，不写入配置
 
-不传 `SIDER_SESSION_ID` 时，relay monitor 默认接收所有 session 的消息。
+约束：
+- 不要混用 `SIDER_SETUP_TOKEN` 和 `SIDER_GATEWAY_URL` / `SIDER_TOKEN`
+- 直接配置模式下，若不传 `SIDER_TOKEN`，脚本只会写入 `gatewayUrl`；仅适用于不校验 relay token 的 gateway
+
+如需其他高级字段，请安装后手动修改 `openclaw.json`。
 
 ---
 
@@ -57,28 +67,30 @@ curl -fsSL https://raw.githubusercontent.com/Sider-ai/siderclaw-install-script/m
   "channels": {
     "sider": {
       "enabled": true,
-      "gatewayUrl": "http://127.0.0.1:8080",
-      "relayId": "openclaw-default"
+      "gatewayUrl": "https://<gateway-url>",
+      "token": "<access-token>"
     }
   }
 }
 ```
 
-如需给主动发送场景提供默认目标，可额外设置：
+setup token 模式下，`openclaw.json` 最小只需要：
 
 ```json
 {
   "channels": {
     "sider": {
-      "defaultTo": "session:siderclaw-default"
+      "enabled": true
     }
   }
 }
 ```
 
-兼容旧版单 session 监听时，也可保留：
-- `sessionId`
-- `sessionKey`
+说明：
+- `SIDER_SETUP_TOKEN` 不会持久化到配置文件
+- setup 成功后，插件会把 `gatewayUrl + token` 自动写回 `channels.sider`
+- 兼容旧配置时，插件仍会读取 `relayToken`，但新配置建议统一写 `token`
+- 如需其他高级字段，请按需手动写入配置
 
 检查状态：
 
