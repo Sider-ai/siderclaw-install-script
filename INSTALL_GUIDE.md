@@ -37,6 +37,8 @@ curl -fsSL https://raw.githubusercontent.com/Sider-ai/siderclaw-install-script/m
 
 1. 安装 mcporter 工具
 
+2. 安装 remote browser skill 和配置
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Sider-ai/siderclaw-install-script/main/openclaw-setup-remote-browser-mcp.sh | \
   bash -s /path/to/workspace http://<browser-mcp-url>
