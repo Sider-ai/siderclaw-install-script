@@ -6,7 +6,6 @@ PLUGIN_ID_DEFAULT="sider"
 
 RUN_CONFIGURE="${RUN_CONFIGURE:-1}"
 SIDER_SETUP_TOKEN="${SIDER_SETUP_TOKEN:-}"
-MANAGER_PUBLIC_URL="${MANAGER_PUBLIC_URL:-}"
 SIDER_GATEWAY_URL="${SIDER_GATEWAY_URL:-}"
 SIDER_RELAY_ID="${SIDER_RELAY_ID:-}"
 SIDER_TOKEN_INPUT="${SIDER_TOKEN:-}"
@@ -90,15 +89,10 @@ configure_common_sider_channel() {
 configure_sider_setup_token_mode() {
   echo "[install] Configuring setup-token mode..."
   configure_common_sider_channel
-  echo "[install] Setup token mode does not persist gatewayUrl/token into openclaw.json."
-  echo "[install] Keep SIDER_SETUP_TOKEN in the OpenClaw runtime environment until the first manager registration completes."
+  openclaw config set channels.sider.setupToken "$SIDER_SETUP_TOKEN"
+  echo "[install] Wrote channels.sider.setupToken."
+  echo "[install] The plugin will exchange it for gatewayUrl/token and remove setupToken after success."
   echo "[install] If channels.sider.gatewayUrl/token already exist, remove them first; otherwise setup-token exchange will be skipped."
-  if [[ -n "$MANAGER_PUBLIC_URL" ]]; then
-    echo "[install] MANAGER_PUBLIC_URL is set for this shell. Ensure the OpenClaw runtime also has it."
-  else
-    echo "[install] MANAGER_PUBLIC_URL is not set in this shell."
-    echo "[install] This is only okay if the installed plugin package already embeds a manager URL."
-  fi
 }
 
 configure_sider_direct_mode() {
@@ -166,9 +160,7 @@ else
     none)
       echo "[install] No channels.sider configuration was applied."
       echo "[install] To use setup-token mode:"
-      echo "  export SIDER_SETUP_TOKEN='<one-time-token>'"
-      echo "  export MANAGER_PUBLIC_URL='https://<manager-base-url>'"
-      echo "  curl -fsSL https://raw.githubusercontent.com/Sider-ai/siderclaw-install-script/main/sider-openclaw-plugin/install-openclaw-plugin.sh | bash"
+      echo "  curl -fsSL https://raw.githubusercontent.com/Sider-ai/siderclaw-install-script/main/sider-openclaw-plugin/install-openclaw-plugin.sh | SIDER_SETUP_TOKEN='<one-time-token>' bash"
       echo "[install] To use direct gateway mode:"
       echo "  curl -fsSL https://raw.githubusercontent.com/Sider-ai/siderclaw-install-script/main/sider-openclaw-plugin/install-openclaw-plugin.sh | SIDER_GATEWAY_URL='https://<gateway-url>' SIDER_TOKEN='<access-token>' bash"
       ;;

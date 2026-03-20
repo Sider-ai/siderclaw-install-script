@@ -23,15 +23,15 @@ curl -fsSL https://raw.githubusercontent.com/Sider-ai/siderclaw-install-script/m
 配置方式 1：只启用 `setup token` 模式：
 
 ```bash
-export SIDER_SETUP_TOKEN='<one-time-token>'
-export MANAGER_PUBLIC_URL='https://<manager-base-url>'
-curl -fsSL https://raw.githubusercontent.com/Sider-ai/siderclaw-install-script/main/sider-openclaw-plugin/install-openclaw-plugin.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Sider-ai/siderclaw-install-script/main/sider-openclaw-plugin/install-openclaw-plugin.sh | \
+  SIDER_SETUP_TOKEN='<one-time-token>' \
+  bash
 ```
 
 说明：
 - 脚本会写入 `channels.sider.enabled=true`
-- `SIDER_SETUP_TOKEN` / `MANAGER_PUBLIC_URL` 仍需保留在 OpenClaw 运行进程的环境变量里
-- 若安装包已内置 manager 地址，`MANAGER_PUBLIC_URL` 可不设置
+- 脚本会把一次性 token 写入 `channels.sider.setupToken`
+- 插件换取成功后，会自动写入长期 `gatewayUrl + token`，并删除 `setupToken`
 - 若当前账号已经配置了 `gatewayUrl/token`，需先移除；否则 setup token 交换不会触发
 
 配置方式 2：直接写入 `gatewayUrl + token`：
@@ -44,8 +44,7 @@ curl -fsSL https://raw.githubusercontent.com/Sider-ai/siderclaw-install-script/m
 ```
 
 安装参数说明：
-- `SIDER_SETUP_TOKEN`：启用 setup token 模式；不会写入 `openclaw.json`
-- `MANAGER_PUBLIC_URL`：setup token 模式下的 manager 基地址；若安装包已内置该值，可不设置
+- `SIDER_SETUP_TOKEN`：启用 setup token 模式；脚本会写入 `channels.sider.setupToken`
 - `SIDER_GATEWAY_URL`：直接配置模式下写入 `channels.sider.gatewayUrl`
 - `SIDER_TOKEN`：直接配置模式下写入 `channels.sider.token`
 - `RUN_CONFIGURE=0`：仅安装插件，不写入配置
@@ -80,15 +79,16 @@ setup token 模式下，`openclaw.json` 最小只需要：
 {
   "channels": {
     "sider": {
-      "enabled": true
+      "enabled": true,
+      "setupToken": "<one-time-token>"
     }
   }
 }
 ```
 
 说明：
-- `SIDER_SETUP_TOKEN` 不会持久化到配置文件
-- setup 成功后，插件会把 `gatewayUrl + token` 自动写回 `channels.sider`
+- setup 成功前，一次性 token 会暂存在 `channels.sider.setupToken`
+- setup 成功后，插件会把 `gatewayUrl + token` 自动写回 `channels.sider`，并删除 `setupToken`
 - 兼容旧配置时，插件仍会读取 `relayToken`，但新配置建议统一写 `token`
 - 如需其他高级字段，请按需手动写入配置
 

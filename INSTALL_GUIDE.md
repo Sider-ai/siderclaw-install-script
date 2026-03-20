@@ -16,7 +16,8 @@ curl -fsSL https://raw.githubusercontent.com/Sider-ai/siderclaw-install-script/m
   bash
 ```
 
-脚本会写入 `channels.sider.enabled=true`，但 `SIDER_SETUP_TOKEN` 仍需保留在 OpenClaw 运行进程的环境变量中。
+脚本会写入 `channels.sider.enabled=true` 和 `channels.sider.setupToken`。
+插件首次换取成功后，会自动写入长期 `gatewayUrl + token`，并删除 `setupToken`。
 如果当前账号已经配置了 `gatewayUrl/token`，需要先移除，否则 setup token 交换不会触发。
 
 ### 方式二：直接配置 Gateway URL + Token
