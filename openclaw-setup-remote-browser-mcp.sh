@@ -228,6 +228,7 @@ article?.innerText
 ## 最佳实践
 
 - 先用 navigate 工具的 `listTabs` 获取标签页信息
+- 新任务时优先用 navigate 工具 newtab:true 打开新标签开始工作，除非明确要求操作当前页面，否则不要直接更改当前页面的地址和内容
 - repl 是最强大的工具——几乎所有 DOM 操作都用它完成
 - 优先使用标准 DOM 方法，nativeClick/nativeType 作为备选
 - 截图帮助理解页面视觉布局，特别是复杂的 SPA 应用
