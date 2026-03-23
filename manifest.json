@@ -21,7 +21,7 @@
       ]
     },
     "siderclaw-gateway": {
-      "version": "0.7.0",
+      "version": "0.8.0",
       "display_name": "SiderClaw Gateway",
       "binary": "siderclaw-gateway-linux-amd64",
       "service": "siderclaw-gateway"
