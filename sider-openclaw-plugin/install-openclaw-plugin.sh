@@ -8,9 +8,7 @@ RUN_CONFIGURE="${RUN_CONFIGURE:-1}"
 SIDER_SETUP_TOKEN="${SIDER_SETUP_TOKEN:-}"
 SIDER_GATEWAY_URL="${SIDER_GATEWAY_URL:-}"
 SIDER_RELAY_ID="${SIDER_RELAY_ID:-}"
-SIDER_TOKEN_INPUT="${SIDER_TOKEN:-}"
-SIDER_RELAY_TOKEN="${SIDER_RELAY_TOKEN:-}"
-SIDER_TOKEN="${SIDER_TOKEN_INPUT:-$SIDER_RELAY_TOKEN}"
+SIDER_TOKEN="${SIDER_TOKEN:-}"
 
 PLUGIN_NPM_SPEC="${PLUGIN_NPM_SPEC:-$PLUGIN_NPM_SPEC_DEFAULT}"
 PLUGIN_ID="${PLUGIN_ID:-$PLUGIN_ID_DEFAULT}"
@@ -23,12 +21,6 @@ fi
 
 if [[ -n "${SIDER_SESSION_ID:-}" || -n "${SIDER_SESSION_KEY:-}" ]]; then
   echo "[install] SIDER_SESSION_ID and SIDER_SESSION_KEY are no longer used during installation; ignoring them."
-fi
-
-if [[ -n "$SIDER_TOKEN_INPUT" && -n "$SIDER_RELAY_TOKEN" && "$SIDER_TOKEN_INPUT" != "$SIDER_RELAY_TOKEN" ]]; then
-  echo "[install] SIDER_TOKEN and SIDER_RELAY_TOKEN are both set but differ." >&2
-  echo "[install] Keep only one of them, or make them identical." >&2
-  exit 1
 fi
 
 echo "[install] Installing plugin from npm package..."
@@ -79,7 +71,6 @@ fi
 
 configure_common_sider_channel() {
   echo "[install] Applying common channels.sider config..."
-  openclaw config set channels.sider.enabled true
 
   if [[ -n "$SIDER_RELAY_ID" ]]; then
     openclaw config set channels.sider.relayId "$SIDER_RELAY_ID"
@@ -102,9 +93,6 @@ configure_sider_direct_mode() {
 
   if [[ -n "$SIDER_TOKEN" ]]; then
     openclaw config set channels.sider.token "$SIDER_TOKEN"
-    if [[ -n "$SIDER_RELAY_TOKEN" && -z "$SIDER_TOKEN_INPUT" ]]; then
-      echo "[install] Received legacy SIDER_RELAY_TOKEN; wrote channels.sider.token."
-    fi
   else
     echo "[install] SIDER_TOKEN is empty; only configure gatewayUrl."
     echo "[install] This works only if the gateway does not require relay auth."
@@ -153,9 +141,13 @@ else
   case "$configure_mode" in
     setup-token)
       configure_sider_setup_token_mode
+      echo "[install] Restarting OpenClaw gateway..."
+      openclaw gateway restart
       ;;
     direct)
       configure_sider_direct_mode
+      echo "[install] Restarting OpenClaw gateway..."
+      openclaw gateway restart
       ;;
     none)
       echo "[install] No channels.sider configuration was applied."

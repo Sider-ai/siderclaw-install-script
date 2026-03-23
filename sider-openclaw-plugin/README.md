@@ -29,10 +29,10 @@ curl -fsSL https://raw.githubusercontent.com/Sider-ai/siderclaw-install-script/m
 ```
 
 说明：
-- 脚本会写入 `channels.sider.enabled=true`
 - 脚本会把一次性 token 写入 `channels.sider.setupToken`
 - 插件换取成功后，会自动写入长期 `gatewayUrl + token`，并删除 `setupToken`
 - 若当前账号已经配置了 `gatewayUrl/token`，需先移除；否则 setup token 交换不会触发
+- 配置写入后，脚本会执行一次 `openclaw gateway restart`
 
 配置方式 2：直接写入 `gatewayUrl + token`：
 
@@ -52,6 +52,7 @@ curl -fsSL https://raw.githubusercontent.com/Sider-ai/siderclaw-install-script/m
 约束：
 - 不要混用 `SIDER_SETUP_TOKEN` 和 `SIDER_GATEWAY_URL` / `SIDER_TOKEN`
 - 直接配置模式下，若不传 `SIDER_TOKEN`，脚本只会写入 `gatewayUrl`；仅适用于不校验 relay token 的 gateway
+- 配置写入后，脚本会执行一次 `openclaw gateway restart`
 
 如需其他高级字段，请安装后手动修改 `openclaw.json`。
 
@@ -89,7 +90,7 @@ setup token 模式下，`openclaw.json` 最小只需要：
 说明：
 - setup 成功前，一次性 token 会暂存在 `channels.sider.setupToken`
 - setup 成功后，插件会把 `gatewayUrl + token` 自动写回 `channels.sider`，并删除 `setupToken`
-- 兼容旧配置时，插件仍会读取 `relayToken`，但新配置建议统一写 `token`
+- 兼容旧配置时，插件仍会读取 `relayToken`，但安装脚本只写 `token`
 - 如需其他高级字段，请按需手动写入配置
 
 检查状态：
