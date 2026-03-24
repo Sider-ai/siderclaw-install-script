@@ -28,6 +28,21 @@
       "binary": "siderclaw-gateway-linux-amd64",
       "service": "siderclaw-gateway",
       "auto_update": false
+    },
+    "phone-mcp": {
+      "version": "0.0.1",
+      "display_name": "Phone MCP",
+      "binary": "phone-mcp-server.mjs",
+      "service": "phone-mcp-server",
+      "runtime": "node",
+      "hooks": [
+        {
+          "file": "openclaw-setup-phone-mcp.sh",
+          "args": [
+            "{{.OpenclawHome}}/.openclaw/workspace"
+          ]
+        }
+      ]
     }
   },
   "plugins": {

@@ -10,12 +10,13 @@
 
 ### 1. 同步脚本维护的文件内容
 
-执行 `openclaw-setup-remote-browser-mcp.sh` 更新以下文件：
+执行各组件的配置脚本更新 OpenClaw 工作区文件：
 
-- `skills/remote-browser/SKILL.md`
-- `config/mcporter.json`
-- `TOOLS.md`
-- `AGENTS.md`
+**Remote Browser MCP：** 执行 `openclaw-setup-remote-browser-mcp.sh`
+- `skills/remote-browser/SKILL.md`、`config/mcporter.json`、`TOOLS.md`、`AGENTS.md`
+
+**Phone MCP：** 执行 `openclaw-setup-phone-mcp.sh`
+- `skills/remote-phone/SKILL.md`、`config/mcporter.json`、`TOOLS.md`、`AGENTS.md`
 
 优先通过执行脚本完成，而非手工逐个改写。
 
@@ -28,6 +29,7 @@
 | browser-mcp | `extension-mcp-linux-amd64` |
 | openclaw-console | `openclaw-console-linux-amd64` |
 | siderclaw-gateway | `siderclaw-gateway-linux-amd64` |
+| phone-mcp | `phone-mcp-server.mjs` + `phone-mcp-server-prompt.txt` |
 
 更新时应定位服务实际加载的可执行文件路径，再进行备份、替换、授权、重启和验证。
 
@@ -39,13 +41,19 @@
 
 ```bash
 cd /path/to/siderclaw-install-script
+
+# Remote Browser MCP
 bash ./openclaw-setup-remote-browser-mcp.sh
 # 或指定工作目录：bash ./openclaw-setup-remote-browser-mcp.sh /target/workspace
+
+# Phone MCP
+bash ./openclaw-setup-phone-mcp.sh
+# 或指定工作目录和地址：bash ./openclaw-setup-phone-mcp.sh /target/workspace
 ```
 
 ### 第二步：定位服务二进制路径与服务级别
 
-对每个需要更新的服务（`browser-mcp`、`openclaw-console`、`siderclaw-gateway`），优先尝试用户级服务：
+对每个需要更新的服务（`browser-mcp`、`openclaw-console`、`siderclaw-gateway`、`phone-mcp-server`），优先尝试用户级服务：
 
 ```bash
 systemctl --user status <服务名>
@@ -174,7 +182,7 @@ sudo systemctl status <服务名> --no-pager
 ## OpenClaw 执行要求
 
 1. 以"更新已有环境"为第一目标，而不是重新设计安装流程。
-2. 优先执行 `openclaw-setup-remote-browser-mcp.sh` 来同步文件内容。
+2. 优先执行 `openclaw-setup-remote-browser-mcp.sh` 和 `openclaw-setup-phone-mcp.sh` 来同步文件内容。
 3. 替换二进制前，必须先确认服务是用户级还是系统级，再确认真实路径，并先备份旧文件。
 4. 如果机器没有 `sudo` 权限，应优先检查是否存在 `systemctl --user` 服务和用户目录下的二进制路径。
 5. 仅在目标机器允许提权时才使用 `sudo`，不要默认假设一定有该权限。

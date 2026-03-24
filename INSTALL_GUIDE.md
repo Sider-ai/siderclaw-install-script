@@ -60,7 +60,32 @@ curl -fsSL https://raw.githubusercontent.com/Sider-ai/siderclaw-install-script/m
 
 ---
 
-## 3. 验证
+## 3. 安装 Phone MCP
+
+配置 remote-phone skill 和 MCPorter siderclaw-phone 服务端。
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Sider-ai/siderclaw-install-script/main/openclaw-setup-phone-mcp.sh | \
+  bash -s /path/to/workspace http://<phone-mcp-url>
+```
+
+| 参数 | 说明 |
+|---|---|
+| 第 1 个参数 | OpenClaw 工作目录路径 |
+| 第 2 个参数 | Browser MCP 服务的实际地址（替换为真实 IP 或域名），脚本会自动拼接 `/mcp` 作为 MCP 端点 |
+
+脚本会在工作目录下创建/更新以下文件：
+
+1. `skills/remote-phone/SKILL.md` — remote-phone 技能定义
+2. `config/mcporter.json` — 注册 siderclaw-phone MCP Server
+3. `TOOLS.md` — 添加 MCP Servers 描述
+4. `AGENTS.md` — 添加 siderclaw-phone 操作规则
+
+脚本具有幂等性，已存在且内容一致的文件会自动跳过。
+
+---
+
+## 4. 验证
 
 ### Sider Plugin
 
@@ -76,4 +101,12 @@ openclaw status --json
 ```bash
 mcporter servers                  # 确认 remote-browser 在列表中
 mcporter tools remote-browser     # 查看可用工具
+```
+
+### Phone MCP
+
+```bash
+mcporter servers              # 确认 siderclaw-phone 在列表中
+mcporter tools siderclaw-phone          # 查看可用工具
+mcporter call siderclaw-phone.health_check --output json
 ```
