@@ -4,13 +4,15 @@
       "version": "0.5.19",
       "display_name": "OpenClaw Console",
       "binary": "openclaw-console-linux-amd64",
-      "service": "openclaw-console"
+      "service": "openclaw-console",
+      "auto_update": true
     },
     "browser-mcp": {
       "version": "0.0.12",
       "display_name": "Browser MCP",
       "binary": "extension-mcp-linux-amd64",
       "service": "browser-mcp",
+      "auto_update": false,
       "hooks": [
         {
           "file": "openclaw-setup-remote-browser-mcp.sh",
@@ -24,13 +26,15 @@
       "version": "0.9.0",
       "display_name": "SiderClaw Gateway",
       "binary": "siderclaw-gateway-linux-amd64",
-      "service": "siderclaw-gateway"
+      "service": "siderclaw-gateway",
+      "auto_update": false
     }
   },
   "plugins": {
     "sider": {
       "display_name": "Sider Plugin",
-      "npm_spec": "@hywkp/sider"
+      "npm_spec": "@hywkp/sider",
+      "auto_update": false
     }
   }
 }
