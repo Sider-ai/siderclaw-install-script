@@ -17,19 +17,18 @@ curl -fsSL https://raw.githubusercontent.com/Sider-ai/siderclaw-install-script/m
 ```
 
 脚本会写入 `channels.sider.enabled=true` 和 `channels.sider.setupToken`。
-插件首次换取成功后，会自动写入长期 `gatewayUrl + token`，并删除 `setupToken`。
-如果当前账号已经配置了 `gatewayUrl/token`，需要先移除，否则 setup token 交换不会触发。
+插件会调用 `POST https://selfclaw.apps.wisebox.ai/v1/claws/register`。
+插件首次换取成功后，会自动写入长期 `token`，并删除 `setupToken`。
 
-### 方式二：直接配置 Gateway URL + Token
+### 方式二：直接配置 Token
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Sider-ai/siderclaw-install-script/main/sider-openclaw-plugin/install-openclaw-plugin.sh | \
-  SIDER_GATEWAY_URL='https://<gateway-url>' \
-  SIDER_TOKEN='<access-token>' \
+  SIDER_TOKEN='<relay-token>' \
   bash
 ```
 
-> 两种模式不要混用。
+> 两种模式不要混用；直接模式必须提供 `SIDER_TOKEN`。
 
 ---
 
@@ -110,3 +109,13 @@ mcporter servers              # 确认 siderclaw-phone 在列表中
 mcporter tools siderclaw-phone          # 查看可用工具
 mcporter call siderclaw-phone.health_check --output json
 ```
+
+---
+
+## 4. 常见问题
+
+### `Error: Cannot find module 'openclaw/plugin-sdk/plugin-entry'`
+
+通常是本地还在使用旧版 `sider` 插件，或本次安装不完整。
+
+新版插件已将 `openclaw` 作为依赖，更新或重新安装 `sider` 后会自动安装。若更新后仍有问题，删除本地 `sider` 插件后重新安装一次。

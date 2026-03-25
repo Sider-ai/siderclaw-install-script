@@ -6,9 +6,9 @@ PLUGIN_ID_DEFAULT="sider"
 
 RUN_CONFIGURE="${RUN_CONFIGURE:-1}"
 SIDER_SETUP_TOKEN="${SIDER_SETUP_TOKEN:-}"
-SIDER_GATEWAY_URL="${SIDER_GATEWAY_URL:-}"
 SIDER_RELAY_ID="${SIDER_RELAY_ID:-}"
 SIDER_TOKEN="${SIDER_TOKEN:-}"
+SIDER_FIXED_BASE_URL="https://selfclaw.apps.wisebox.ai"
 
 PLUGIN_NPM_SPEC="${PLUGIN_NPM_SPEC:-$PLUGIN_NPM_SPEC_DEFAULT}"
 PLUGIN_ID="${PLUGIN_ID:-$PLUGIN_ID_DEFAULT}"
@@ -82,52 +82,37 @@ configure_sider_setup_token_mode() {
   configure_common_sider_channel
   openclaw config set channels.sider.setupToken "$SIDER_SETUP_TOKEN"
   echo "[install] Wrote channels.sider.setupToken."
-  echo "[install] The plugin will exchange it for gatewayUrl/token and remove setupToken after success."
-  echo "[install] If channels.sider.gatewayUrl/token already exist, remove them first; otherwise setup-token exchange will be skipped."
+  echo "[install] The plugin will call ${SIDER_FIXED_BASE_URL}/v1/claws/register, exchange it for a relay token, and remove setupToken after success."
 }
 
 configure_sider_direct_mode() {
-  echo "[install] Configuring direct gateway mode..."
+  echo "[install] Configuring direct token mode..."
   configure_common_sider_channel
-  openclaw config set channels.sider.gatewayUrl "$SIDER_GATEWAY_URL"
-
-  if [[ -n "$SIDER_TOKEN" ]]; then
-    openclaw config set channels.sider.token "$SIDER_TOKEN"
-  else
-    echo "[install] SIDER_TOKEN is empty; only configure gatewayUrl."
-    echo "[install] This works only if the gateway does not require relay auth."
-  fi
+  openclaw config set channels.sider.token "$SIDER_TOKEN"
+  echo "[install] Wrote channels.sider.token."
 }
 
 resolve_configure_mode() {
   local has_setup_token=0
-  local has_direct_gateway=0
   local has_direct_token=0
 
   if [[ -n "$SIDER_SETUP_TOKEN" ]]; then
     has_setup_token=1
   fi
-  if [[ -n "$SIDER_GATEWAY_URL" ]]; then
-    has_direct_gateway=1
-  fi
   if [[ -n "$SIDER_TOKEN" ]]; then
     has_direct_token=1
   fi
 
-  if (( has_setup_token )) && (( has_direct_gateway || has_direct_token )); then
+  if (( has_setup_token )) && (( has_direct_token )); then
     echo "[install] Do not mix setup-token mode with direct gateway/token mode." >&2
-    echo "[install] Use either SIDER_SETUP_TOKEN, or SIDER_GATEWAY_URL (+ optional SIDER_TOKEN)." >&2
+    echo "[install] Use either SIDER_SETUP_TOKEN, or SIDER_TOKEN." >&2
     return 1
   fi
   if (( has_setup_token )); then
     echo "setup-token"
     return 0
   fi
-  if (( has_direct_token )) && (( ! has_direct_gateway )); then
-    echo "[install] SIDER_TOKEN requires SIDER_GATEWAY_URL." >&2
-    return 1
-  fi
-  if (( has_direct_gateway )); then
+  if (( has_direct_token )); then
     echo "direct"
     return 0
   fi
@@ -153,8 +138,8 @@ else
       echo "[install] No channels.sider configuration was applied."
       echo "[install] To use setup-token mode:"
       echo "  curl -fsSL https://raw.githubusercontent.com/Sider-ai/siderclaw-install-script/main/sider-openclaw-plugin/install-openclaw-plugin.sh | SIDER_SETUP_TOKEN='<one-time-token>' bash"
-      echo "[install] To use direct gateway mode:"
-      echo "  curl -fsSL https://raw.githubusercontent.com/Sider-ai/siderclaw-install-script/main/sider-openclaw-plugin/install-openclaw-plugin.sh | SIDER_GATEWAY_URL='https://<gateway-url>' SIDER_TOKEN='<access-token>' bash"
+      echo "[install] To use direct token mode:"
+      echo "  curl -fsSL https://raw.githubusercontent.com/Sider-ai/siderclaw-install-script/main/sider-openclaw-plugin/install-openclaw-plugin.sh | SIDER_TOKEN='<relay-token>' bash"
       ;;
   esac
 fi

@@ -30,28 +30,26 @@ curl -fsSL https://raw.githubusercontent.com/Sider-ai/siderclaw-install-script/m
 
 说明：
 - 脚本会把一次性 token 写入 `channels.sider.setupToken`
-- 插件换取成功后，会自动写入长期 `gatewayUrl + token`，并删除 `setupToken`
-- 若当前账号已经配置了 `gatewayUrl/token`，需先移除；否则 setup token 交换不会触发
+- 插件会调用 `POST https://selfclaw.apps.wisebox.ai/v1/claws/register`
+- 插件换取成功后，会自动写入长期 `token`，并删除 `setupToken`
 - 配置写入后，脚本会执行一次 `openclaw gateway restart`
 
-配置方式 2：直接写入 `gatewayUrl + token`：
+配置方式 2：直接写入 `token`：
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Sider-ai/siderclaw-install-script/main/sider-openclaw-plugin/install-openclaw-plugin.sh | \
-  SIDER_GATEWAY_URL='https://<gateway-url>' \
-  SIDER_TOKEN='<access-token>' \
+  SIDER_TOKEN='<relay-token>' \
   bash
 ```
 
 安装参数说明：
 - `SIDER_SETUP_TOKEN`：启用 setup token 模式；脚本会写入 `channels.sider.setupToken`
-- `SIDER_GATEWAY_URL`：直接配置模式下写入 `channels.sider.gatewayUrl`
 - `SIDER_TOKEN`：直接配置模式下写入 `channels.sider.token`
 - `RUN_CONFIGURE=0`：仅安装插件，不写入配置
 
 约束：
-- 不要混用 `SIDER_SETUP_TOKEN` 和 `SIDER_GATEWAY_URL` / `SIDER_TOKEN`
-- 直接配置模式下，若不传 `SIDER_TOKEN`，脚本只会写入 `gatewayUrl`；仅适用于不校验 relay token 的 gateway
+- 不要混用 `SIDER_SETUP_TOKEN` 和 `SIDER_TOKEN`
+- selfclaw 的 `/ws/*` 和 `/v1/*` 都要求 relay token；直接模式必须提供 `SIDER_TOKEN`
 - 配置写入后，脚本会执行一次 `openclaw gateway restart`
 
 如需其他高级字段，请安装后手动修改 `openclaw.json`。
@@ -67,8 +65,7 @@ curl -fsSL https://raw.githubusercontent.com/Sider-ai/siderclaw-install-script/m
   "channels": {
     "sider": {
       "enabled": true,
-      "gatewayUrl": "https://<gateway-url>",
-      "token": "<access-token>"
+      "token": "<relay-token>"
     }
   }
 }
@@ -89,8 +86,7 @@ setup token 模式下，`openclaw.json` 最小只需要：
 
 说明：
 - setup 成功前，一次性 token 会暂存在 `channels.sider.setupToken`
-- setup 成功后，插件会把 `gatewayUrl + token` 自动写回 `channels.sider`，并删除 `setupToken`
-- 兼容旧配置时，插件仍会读取 `relayToken`，但安装脚本只写 `token`
+- setup 成功后，插件会把 `token` 自动写回 `channels.sider`，并删除 `setupToken`
 - 如需其他高级字段，请按需手动写入配置
 
 检查状态：
@@ -107,12 +103,12 @@ openclaw status --json
 ## 3. 基础协议（relay 侧）
 
 WebSocket 连接：
-- `ws://<gateway>/ws/relay`
+- `wss://selfclaw.apps.wisebox.ai/ws/relay?token=rlk_xxx`
 
 握手首帧：
 
 ```json
-{"type":"register","relay_id":"<relay_id>","token":"<optional>"}
+{"type":"register","relay_id":"<relay_id>"}
 ```
 
 发送持久化消息：
