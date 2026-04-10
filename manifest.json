@@ -8,14 +8,14 @@
       "auto_update": true
     },
     "browser-mcp": {
-      "version": "0.0.12",
+      "version": "0.1.1",
       "display_name": "Browser MCP",
-      "binary": "extension-mcp-linux-amd64",
+      "binary": "openclaw-browser-mcp-linux-amd64",
       "service": "browser-mcp",
       "auto_update": false,
       "hooks": [
         {
-          "file": "openclaw-setup-remote-browser-mcp.sh",
+          "file": "openclaw-setup-browser-mcp.sh",
           "args": [
             "{{.OpenclawHome}}/.openclaw/workspace"
           ]
