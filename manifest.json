@@ -17,7 +17,7 @@
         {
           "file": "openclaw-setup-browser-mcp.sh",
           "args": [
-            "{{.OpenclawHome}}/.openclaw/workspace"
+            "single 3000"
           ]
         }
       ]
