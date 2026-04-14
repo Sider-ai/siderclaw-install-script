@@ -8,7 +8,7 @@
       "auto_update": true
     },
     "browser-mcp": {
-      "version": "0.1.1",
+      "version": "0.1.2",
       "display_name": "Browser MCP",
       "binary": "openclaw-browser-mcp-linux-amd64",
       "service": "browser-mcp",
