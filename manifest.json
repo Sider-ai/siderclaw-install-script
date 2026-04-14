@@ -27,7 +27,7 @@
       "display_name": "SiderClaw Gateway",
       "binary": "siderclaw-gateway-linux-amd64",
       "service": "siderclaw-gateway",
-      "auto_update": false
+      "auto_update": true
     },
     "phone-mcp": {
       "version": "0.0.1",
