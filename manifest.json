@@ -12,7 +12,7 @@
       "display_name": "Browser MCP",
       "binary": "openclaw-browser-mcp-linux-amd64",
       "service": "browser-mcp",
-      "auto_update": false,
+      "auto_update": true,
       "hooks": [
         {
           "file": "openclaw-setup-browser-mcp.sh",
