@@ -48,7 +48,7 @@
   "plugins": {
     "sider": {
       "display_name": "Sider Plugin",
-      "npm_spec": "@hywkp/sider",
+      "npm_spec": "@hywkp/test-openclaw-sider",
       "auto_update": false
     }
   }
