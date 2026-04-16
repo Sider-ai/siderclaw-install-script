@@ -5,7 +5,7 @@
       "display_name": "OpenClaw Console",
       "binary": "openclaw-console-linux-amd64",
       "service": "openclaw-console",
-      "auto_update": true
+      "auto_update": false
     },
     "browser-mcp": {
       "version": "0.1.3",
