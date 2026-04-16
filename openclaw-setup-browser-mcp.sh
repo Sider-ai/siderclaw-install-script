@@ -153,7 +153,7 @@ version: 0.0.2
   - 代码在 userScripts 隔离环境（USER_SCRIPT world，loose CSP）中运行，可直接访问 DOM
   - **统一运行时 `siderRuntime`**：所有浏览器自动化能力通过 `window.siderRuntime.*` 暴露，包括 native 输入（`siderRuntime.nativeClick` / `nativeType` / `nativePressKey` / `nativeKeyDown` / `nativeKeyUp` / `nativeHover` / `nativeDrag` / `nativeScroll` / `nativeScrollTo`）、网络（`siderRuntime.fetch`）、持久存储（`siderRuntime.artifacts.list/get/createOrUpdate/delete`）、标签页（`siderRuntime.openInTab`）、等待（`siderRuntime.waitFor/waitForSelector`）、主世界执行（`siderRuntime.executeInMainWorld`）、DOM 注入（`siderRuntime.addElement/addStyle`）、音频（`siderRuntime.audio.*`）、控制台/网络日志读取（`siderRuntime.readConsoleMessages/readNetworkRequests`）
   - **自动注入 domain skill 库**：根据当前页面 URL 匹配，把对应 skill 的 library 代码挂到 `window.siderRuntime.skills[<skillName>]`（如 google.com 页面可直接用 `siderRuntime.skills.google.getSearchResults()`）
-  - 支持 sessionId 参数，用于按 session 隔离操作的标签页；sessionId 同时作为 `siderRuntime.artifacts` 的 conversationId 命名空间
+  - 支持 sessionId 参数（从消息 meta.UntrustedContext 的 `gateway_sessionid` 获取），用于按 session 隔离操作的标签页；sessionId 同时作为 `siderRuntime.artifacts` 的 conversationId 命名空间
   - 支持 browserId 参数，用于路由到指定浏览器实例
   - 用途：DOM 查询与操作、页面数据提取、表单填写、多页面爬取
 
@@ -162,14 +162,14 @@ version: 0.0.2
   - 前进/后退历史记录
   - 列出所有标签页（含 groupId 和 currentSessionGroupId）、在新标签页打开
   - **所有操作都返回 executedOnTabId**，后续工具调用应带上此 tabId
-  - 支持 sessionId 参数，新建的标签页会自动归入对应 session 的 tab group
+  - 支持 sessionId 参数（从消息 meta.UntrustedContext 的 `gateway_sessionid` 获取），新建的标签页会自动归入对应 session 的 tab group
   - 支持 browserId 参数，用于路由到指定浏览器实例
   - listTabs 返回每个 tab 的 groupId（-1 表示未分组）以及 currentSessionGroupId（当前 session 的 group）。相同 groupId 的 tab 属于同一 session，优先操作 currentSessionGroupId 内的 tab
 
 **screenshot** — 截图与图片提取
   - 无 selector：截取当前可视区域
   - 有 selector：提取页面中指定的图片元素（img/canvas/background-image）
-  - 支持 sessionId 参数，截图时定位到对应 session 正在操作的标签页
+  - 支持 sessionId 参数（从消息 meta.UntrustedContext 的 `gateway_sessionid` 获取），截图时定位到对应 session 正在操作的标签页
   - 支持 browserId 参数，用于路由到指定浏览器实例
 
 **artifacts** — 跨调用持久化 KV 存储
@@ -420,7 +420,7 @@ article?.innerText
 - 先用 navigate 工具的 `listTabs` 获取标签页信息
 - 新任务时优先用 navigate 工具 newtab:true 打开新标签开始工作，除非明确要求操作当前页面，否则不要直接更改当前页面的地址和内容，用来查找信息的网页，尽量复用tabid，不要开太多的tab在浏览器上
 - **从 navigate 返回的 `executedOnTabId` 获取 tabId，后续 repl/screenshot 等调用都带上此 tabId**，确保操作目标一致
-- **始终在工具调用中传递 `sessionId` 参数**，确保不同 session 的标签页分组隔离，避免跨 session 误操作标签页
+- **始终在工具调用中传递 `sessionId` 参数**（从消息的 `meta.UntrustedContext` 中的 `gateway_sessionid` 获取），确保不同 session 的标签页分组隔离，避免跨 session 误操作标签页
 - **⚠️ navigate 返回 availableSkills 时，必须先 `skills get` 获取真实访问键和函数签名再写代码**——不要猜测访问键（skill 名和 `siderRuntime.skills` 下的键可能不同）
 - repl 是最强大的工具——几乎所有 DOM 操作都用它完成
 - 优先使用标准 DOM 方法，`siderRuntime.nativeClick` / `nativeType` 作为备选
@@ -456,7 +456,7 @@ mcporter call remote-browser.navigate url=https://example.com
 ## 工具参数速查（共 5 个工具）
 
 ### 1. repl — 在页面上下文执行 JavaScript
-参数：`code`（必填）、`title`（必填）、`tabId`（可选，默认活跃标签页）、`sessionId`（可选，用于 session 级标签页隔离）、`browserId`（可选，从消息 meta.SenderId 获取，路由到指定浏览器）
+参数：`code`（必填）、`title`（必填）、`tabId`（可选，默认活跃标签页）、`sessionId`（可选，从消息 meta.UntrustedContext 的 `gateway_sessionid` 获取，用于 session 级标签页隔离）、`browserId`（可选，从消息 meta.SenderId 获取，路由到指定浏览器）
 ```
 mcporter call remote-browser.repl --args '{"code": "document.title", "title": "Get title", "browserId": "<SenderId>"}' --output json
 mcporter call remote-browser.repl --args '{"code": "await siderRuntime.nativeClick(\"button.submit\")", "tabId": 123, "title": "Submit form", "browserId": "<SenderId>"}' --output json
@@ -464,7 +464,7 @@ mcporter call remote-browser.repl --args '{"code": "await siderRuntime.skills.go
 ```
 
 ### 2. navigate — 导航与标签页管理
-参数均可选：`url`、`tabId`、`back`、`forward`、`listTabs`、`newTab`、`sessionId`（用于 session 级标签页隔离）、`browserId`（从消息 meta.SenderId 获取，路由到指定浏览器）
+参数均可选：`url`、`tabId`、`back`、`forward`、`listTabs`、`newTab`、`sessionId`（从消息 meta.UntrustedContext 的 `gateway_sessionid` 获取，用于 session 级标签页隔离）、`browserId`（从消息 meta.SenderId 获取，路由到指定浏览器）
 返回 `executedOnTabId` — 后续工具调用应带上此 tabId
 ```
 mcporter call remote-browser.navigate --args '{"url": "https://example.com", "browserId": "<SenderId>"}' --output json
@@ -474,7 +474,7 @@ mcporter call remote-browser.navigate --args '{"back": true, "browserId": "<Send
 ```
 
 ### 3. screenshot — 截图/图片提取
-参数均可选：`tabId`、`selector`、`maxWidth`、`sessionId`（用于 session 级标签页隔离）、`browserId`（从消息 meta.SenderId 获取，路由到指定浏览器）
+参数均可选：`tabId`、`selector`、`maxWidth`、`sessionId`（从消息 meta.UntrustedContext 的 `gateway_sessionid` 获取，用于 session 级标签页隔离）、`browserId`（从消息 meta.SenderId 获取，路由到指定浏览器）
 ```
 mcporter call remote-browser.screenshot --args '{"browserId": "<SenderId>"}' --output json
 mcporter call remote-browser.screenshot --args '{"tabId": 123, "browserId": "<SenderId>"}' --output json
