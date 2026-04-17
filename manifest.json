@@ -46,8 +46,13 @@
     }
   },
   "plugins": {
-    "sider": {
+    "chrome-openclaw-sider": {
       "display_name": "Sider Plugin",
+      "npm_spec": "chrome-openclaw-sider",
+      "auto_update": false
+    },
+    "test-openclaw-sider": {
+      "display_name": "Sider Plugin (Test)",
       "npm_spec": "@hywkp/test-openclaw-sider",
       "auto_update": false
     }
